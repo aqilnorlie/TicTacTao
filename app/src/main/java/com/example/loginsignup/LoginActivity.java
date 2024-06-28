@@ -51,10 +51,11 @@ public class LoginActivity extends AppCompatActivity{
                 }else{
                     int phoneNum = Integer.parseInt(phoneString);
                     authentication = db.authentication(phoneNum, password);
-                    if(authentication == 0){
+                    if(authentication == -1){
                         Toast.makeText(getApplicationContext(), "Wrong Phone Number or Password", Toast.LENGTH_LONG).show();
                     }else{
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        intent.putExtra("hostId", authentication);
                         startActivity(intent);
                     }
 

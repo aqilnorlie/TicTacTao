@@ -8,6 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     static String name = "tictactoaDB";
@@ -62,14 +65,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public int authentication(int phone_num, String password){
         SQLiteDatabase db;
         Cursor cursor;
-        int count;
+        int hostId;
         db = this.getReadableDatabase();
         cursor = db.rawQuery("SELECT * FROM hosts WHERE hostPhoneNum = ? AND hostPassword = ? ",
                 new String[]{String.valueOf(phone_num), password});
-        count = cursor.getCount();
-        cursor.close();
-
-        return count;
+        if (cursor.moveToFirst()) {
+            hostId = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
+            cursor.close();
+            return hostId;
+        } else {
+            cursor.close();
+            return -1; // Indicates authentication failure
+        }
     }
 
     public boolean checkPhoneNumExist(int phone_num){
@@ -86,6 +93,60 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return count <= 0;
     }
 
+    public boolean insertNickname(int hostID, String nickname){
+        SQLiteDatabase db_write, db_read;
+        Cursor cursor;
+        ContentValues values;
+        int count;
+
+        db_read = this.getReadableDatabase();
+        cursor = db_read.rawQuery("SELECT * FROM players WHERE hostID = ? AND playerNickname = ?" , new String[]{String.valueOf(hostID), nickname});
+
+        count = cursor.getCount();
+        if (count > 0){
+            cursor.close();
+            return false;
+        }else{
+            db_write = this.getWritableDatabase();
+            values = new ContentValues();
+            values.put("playerNickname", nickname);
+            values.put("hostID", hostID);
+
+            db_write.insert("players", null, values);
+            db_write.close();
+            return true;
+
+        }
+
+    }
+
+    public List<String> getAllNicknames(int hostID) {
+        List<String> nicknames = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT playerNickname FROM players WHERE hostID = ?", new String[]{String.valueOf(hostID)});
+
+        if (cursor.moveToFirst()) {
+            do {
+                nicknames.add(cursor.getString(cursor.getColumnIndexOrThrow("playerNickname")));
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return nicknames;
+    }
+
+
+//    public boolean checkNicknamePlayer(String player1, String player2){
+//        SQLiteDatabase db;
+//        Cursor cursor;
+//        int count;
+//
+//        db = this.getReadableDatabase();
+//        cursor = db.rawQuery("SELECT * FROM players WHERE hostID = ? AND playerNickname = ?" , new String[]{String.valueOf(hostID), nickname});
+//
+//
+//    }
 
 
 }
